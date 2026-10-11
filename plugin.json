@@ -1,0 +1,12 @@
+{
+  "ID": "6F3C2B8E9A1D4E7FB5C0D2A4E8F61B37",
+  "ActionKeyword": "glass",
+  "Name": "Liquid Glass",
+  "Description": "把 Flow Launcher 主窗口变成液态玻璃：背景折射、边缘色散、动态高光",
+  "Author": "wellway",
+  "Version": "1.0.0",
+  "Language": "csharp",
+  "Website": "https://github.com/Flow-Launcher/Flow.Launcher",
+  "ExecuteFileName": "Flow.Launcher.Plugin.LiquidGlass.dll",
+  "IcoPath": "Images\\icon.png"
+}

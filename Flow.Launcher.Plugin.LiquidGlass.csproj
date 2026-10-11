@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>disable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Flow.Launcher.Plugin.LiquidGlass</RootNamespace>
+    <AssemblyName>Flow.Launcher.Plugin.LiquidGlass</AssemblyName>
+    <Version>1.0.0</Version>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- 允许在 Linux/macOS 上的 CI 也能还原/编译 Windows 目标 -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Flow.Launcher.Plugin 由宿主提供，只需要编译期引用，不随插件拷贝。5.0.0 = Flow Launcher 2.0.0，最低支持版本 -->
+    <PackageReference Include="Flow.Launcher.Plugin" Version="5.0.0">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Shaders\LiquidGlass.hlsl" />
+    <None Include="plugin.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Images\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

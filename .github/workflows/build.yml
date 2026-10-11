@@ -1,0 +1,33 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Build
+        run: dotnet build Flow.Launcher.Plugin.LiquidGlass.csproj -c Release -o out
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $pkg = "LiquidGlass"
+          New-Item -ItemType Directory -Force $pkg | Out-Null
+          Copy-Item out/Flow.Launcher.Plugin.LiquidGlass.dll, out/plugin.json $pkg
+          Copy-Item -Recurse out/Images $pkg
+          Compress-Archive -Path "$pkg/*" -DestinationPath "Flow.Launcher.Plugin.LiquidGlass.zip" -Force
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Flow.Launcher.Plugin.LiquidGlass
+          path: Flow.Launcher.Plugin.LiquidGlass.zip
