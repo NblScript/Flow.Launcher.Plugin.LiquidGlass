@@ -2,8 +2,13 @@ name: Build
 
 on:
   push:
+    branches: ['**']
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -31,3 +36,9 @@ jobs:
         with:
           name: Flow.Launcher.Plugin.LiquidGlass
           path: Flow.Launcher.Plugin.LiquidGlass.zip
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Flow.Launcher.Plugin.LiquidGlass.zip

@@ -6,7 +6,7 @@
   "Author": "wellway",
   "Version": "1.0.0",
   "Language": "csharp",
-  "Website": "https://github.com/Flow-Launcher/Flow.Launcher",
+  "Website": "https://github.com/NblScript/Flow.Launcher.Plugin.LiquidGlass",
   "ExecuteFileName": "Flow.Launcher.Plugin.LiquidGlass.dll",
   "IcoPath": "Images\\icon.png"
 }
