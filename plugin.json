@@ -3,7 +3,7 @@
   "ActionKeyword": "glass",
   "Name": "Liquid Glass",
   "Description": "把 Flow Launcher 主窗口变成液态玻璃：背景折射、边缘色散、动态高光",
-  "Author": "wellway",
+  "Author": "qingking",
   "Version": "1.0.0",
   "Language": "csharp",
   "Website": "https://github.com/NblScript/Flow.Launcher.Plugin.LiquidGlass",
