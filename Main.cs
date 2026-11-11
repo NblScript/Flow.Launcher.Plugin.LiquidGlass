@@ -31,6 +31,7 @@ namespace Flow.Launcher.Plugin.LiquidGlass
             _api.VisibilityChanged += OnVisibilityChanged;
             _api.ActualApplicationThemeChanged += OnAppThemeChanged;
 
+            // Flow 在线程池上调用 Init；所有 WPF 对象都必须在 UI 线程上创建和使用。
             // 等主窗口和主题系统就绪后再接管
             Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(ApplyAll));
         }
@@ -45,6 +46,7 @@ namespace Flow.Launcher.Plugin.LiquidGlass
         /// <summary>按当前设置写主题、切主题、挂玻璃层。必须在 UI 线程调用。</summary>
         internal void ApplyAll()
         {
+            L.Refresh();
             try
             {
                 if (!_settings.Enabled)
@@ -81,7 +83,30 @@ namespace Flow.Launcher.Plugin.LiquidGlass
             catch (Exception e)
             {
                 _api.LogException(ClassName, "Failed to apply liquid glass", e);
+                _glass.Fail(e);
             }
+        }
+
+        /// <summary>
+        /// 在 UI 线程上运行，并吞掉异常：插件里的任何错误都不能让 Flow 崩溃。
+        /// 出错时卸下玻璃层，Flow 保持可用。
+        /// </summary>
+        private void RunOnUi(Action action, string what)
+        {
+            void Guarded()
+            {
+                try { action(); }
+                catch (Exception e)
+                {
+                    _api.LogException(ClassName, what + " failed", e);
+                    _glass.Fail(e);
+                }
+            }
+
+            var d = Application.Current?.Dispatcher;
+            if (d == null) return;
+            if (d.CheckAccess()) Guarded();
+            else d.Invoke(Guarded);
         }
 
         private bool IsOurThemeActive() => IsOurTheme(_api.GetCurrentTheme());
@@ -98,11 +123,13 @@ namespace Flow.Launcher.Plugin.LiquidGlass
             if (prev != null) _api.SetCurrentTheme(prev);
         }
 
+        internal void ResetFailure() => _glass.ResetFailure();
+
         /// <summary>设置面板里每次改动都走这里，做个防抖</summary>
         internal void ScheduleApply()
         {
             _applyDebounce ??= new DispatcherTimer(TimeSpan.FromMilliseconds(200), DispatcherPriority.Background,
-                (_, _) => { _applyDebounce.Stop(); _api.SaveSettingJsonStorage<Settings>(); ApplyAll(); },
+                (_, _) => { _applyDebounce.Stop(); RunOnUi(() => { _api.SaveSettingJsonStorage<Settings>(); ApplyAll(); }, "Apply settings"); },
                 Application.Current.Dispatcher);
             _applyDebounce.Stop();
             _applyDebounce.Start();
@@ -110,7 +137,7 @@ namespace Flow.Launcher.Plugin.LiquidGlass
 
         private void OnVisibilityChanged(object sender, VisibilityChangedEventArgs args)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            RunOnUi(() =>
             {
                 if (!args.IsVisible) { _glass.OnHidden(); return; }
                 if (!_settings.Enabled) return;
@@ -124,15 +151,15 @@ namespace Flow.Launcher.Plugin.LiquidGlass
                     return;
                 }
 
-                if (!_glass.IsAttached) _glass.Attach();
+                if (!_glass.IsAttached) { if (!_glass.HasFailed) _glass.Attach(); }
                 else _glass.OnShown();
-            });
+            }, "Window shown");
         }
 
         private void OnAppThemeChanged(object sender, ActualApplicationThemeChangedEventArgs args)
         {
             if (_settings.Enabled && _settings.Appearance == GlassAppearance.Auto)
-                Application.Current.Dispatcher.BeginInvoke(new Action(ApplyAll));
+                Application.Current?.Dispatcher.BeginInvoke(new Action(ApplyAll));
         }
 
         public List<Result> Query(Query query)
@@ -142,13 +169,14 @@ namespace Flow.Launcher.Plugin.LiquidGlass
             {
                 new()
                 {
-                    Title = s.Enabled ? "液态玻璃：已开启" : "液态玻璃：已关闭",
-                    SubTitle = s.Enabled ? "回车关闭，恢复之前的主题" : "回车开启",
+                    Title = s.Enabled ? L.T("Liquid Glass: on", "液态玻璃：已开启") : L.T("Liquid Glass: off", "液态玻璃：已关闭"),
+                    SubTitle = s.Enabled ? L.T("Press Enter to turn off and restore your previous theme", "回车关闭，恢复之前的主题") : L.T("Press Enter to turn on", "回车开启"),
                     IcoPath = Icon,
                     Score = 100,
                     Action = _ =>
                     {
                         s.Enabled = !s.Enabled;
+                        _glass.ResetFailure();
                         _api.SaveSettingJsonStorage<Settings>();
                         Application.Current.Dispatcher.BeginInvoke(new Action(ApplyAll));
                         return true;
@@ -156,10 +184,10 @@ namespace Flow.Launcher.Plugin.LiquidGlass
                 },
                 new()
                 {
-                    Title = "模式：" + (s.Mode == GlassMode.Refraction ? "自绘折射" : "系统亚克力"),
+                    Title = L.T("Mode: ", "模式：") + (s.Mode == GlassMode.Refraction ? L.T("Refraction", "自绘折射") : L.T("System acrylic", "系统亚克力")),
                     SubTitle = s.Mode == GlassMode.Refraction
-                        ? "回车切换为系统亚克力（Win11 DWM 模糊 + 玻璃高光，不抓屏）"
-                        : "回车切换为自绘折射（抓取背景 + 着色器折射/色散）",
+                        ? L.T("Press Enter to switch to system acrylic (Windows 11 DWM blur + glass highlight, no screen capture)", "回车切换为系统亚克力（Win11 DWM 模糊 + 玻璃高光，不抓屏）")
+                        : L.T("Press Enter to switch to refraction (background capture + shader refraction/dispersion)", "回车切换为自绘折射（抓取背景 + 着色器折射/色散）"),
                     IcoPath = Icon,
                     Score = 90,
                     Action = _ =>
@@ -173,13 +201,13 @@ namespace Flow.Launcher.Plugin.LiquidGlass
                 },
                 new()
                 {
-                    Title = "外观：" + s.Appearance switch
+                    Title = L.T("Appearance: ", "外观：") + s.Appearance switch
                     {
-                        GlassAppearance.Light => "浅色",
-                        GlassAppearance.Dark => "深色",
-                        _ => "跟随 Flow"
+                        GlassAppearance.Light => L.T("Light", "浅色"),
+                        GlassAppearance.Dark => L.T("Dark", "深色"),
+                        _ => L.T("Follow Flow", "跟随 Flow")
                     },
-                    SubTitle = "回车在 跟随 Flow → 浅色 → 深色 之间切换",
+                    SubTitle = L.T("Press Enter to cycle Follow Flow → Light → Dark", "回车在 跟随 Flow → 浅色 → 深色 之间切换"),
                     IcoPath = Icon,
                     Score = 80,
                     Action = _ =>
@@ -192,8 +220,8 @@ namespace Flow.Launcher.Plugin.LiquidGlass
                 },
                 new()
                 {
-                    Title = "调整参数…",
-                    SubTitle = "打开 Flow 设置 → 插件 → Liquid Glass（圆角、模糊、折射、色散、高光）",
+                    Title = L.T("Adjust settings…", "调整参数…"),
+                    SubTitle = L.T("Open Flow settings → Plugins → Liquid Glass (corner radius, blur, refraction, dispersion, highlight)", "打开 Flow 设置 → 插件 → Liquid Glass（圆角、模糊、折射、色散、高光）"),
                     IcoPath = Icon,
                     Score = 70,
                     Action = _ =>
@@ -208,7 +236,7 @@ namespace Flow.Launcher.Plugin.LiquidGlass
             {
                 results.Add(new Result
                 {
-                    Title = "提示",
+                    Title = L.T("Notice", "提示"),
                     SubTitle = _glass.LastError,
                     IcoPath = Icon,
                     Score = 10

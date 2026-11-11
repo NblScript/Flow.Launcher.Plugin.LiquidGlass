@@ -54,12 +54,12 @@ Copy `Flow.Launcher.Plugin.LiquidGlass.dll`, `plugin.json` and the `Images` fold
 
 Type `glass` in Flow:
 
-- **On / off** (液态玻璃：已开启 / 已关闭): toggles the effect; turning it off restores the theme you used before
-- **Mode** (模式): switches between refraction and system acrylic
-- **Appearance** (外观): follow Flow / light / dark
-- **Adjust settings…** (调整参数…): opens Flow settings → Plugins → Liquid Glass, where you can tune corner radius, blur, refraction strength, edge width, dispersion, tint, saturation, highlight, light angle and the live refresh interval
+- **On / off**: toggles the effect; turning it off restores the theme you used before
+- **Mode**: switches between refraction and system acrylic
+- **Appearance**: follow Flow / light / dark
+- **Adjust settings…**: opens Flow settings → Plugins → Liquid Glass, where you can tune corner radius, blur, refraction strength, edge width, dispersion, tint, saturation, highlight, light angle and the live refresh interval
 
-The in-launcher labels are currently in Chinese; the English names above are given for reference.
+Labels are shown in English, or in Chinese when Flow's language is set to Chinese.
 
 If you manually switch to another theme in Flow settings, the plugin disables itself and will not take the theme back. Type `glass` and press Enter to turn it on again.
 

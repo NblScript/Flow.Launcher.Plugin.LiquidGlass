@@ -8,7 +8,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>Flow.Launcher.Plugin.LiquidGlass</RootNamespace>
     <AssemblyName>Flow.Launcher.Plugin.LiquidGlass</AssemblyName>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>

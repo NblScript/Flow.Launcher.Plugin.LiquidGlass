@@ -15,48 +15,51 @@ namespace Flow.Launcher.Plugin.LiquidGlass
         {
             _main = main;
             _s = main.Settings;
+            L.Refresh();
 
             var root = new StackPanel { Margin = new Thickness(70, 14, 18, 14) };
 
-            var enabled = new CheckBox { Content = "启用液态玻璃（会切换到「Liquid Glass」主题）", IsChecked = _s.Enabled, Margin = new Thickness(0, 0, 0, 12) };
-            enabled.Checked += (_, _) => { _s.Enabled = true; Changed(); };
+            var enabled = new CheckBox { Content = L.T("Enable Liquid Glass (switches to the \"Liquid Glass\" theme)", "启用液态玻璃（会切换到「Liquid Glass」主题）"), IsChecked = _s.Enabled, Margin = new Thickness(0, 0, 0, 12) };
+            enabled.Checked += (_, _) => { _s.Enabled = true; _main.ResetFailure(); Changed(); };
             enabled.Unchecked += (_, _) => { _s.Enabled = false; Changed(); };
             root.Children.Add(enabled);
 
-            root.Children.Add(Combo("模式", new[]
+            root.Children.Add(Combo(L.T("Mode", "模式"), new[]
             {
-                "自绘折射（抓取背景 + 着色器，Win10 2004+）",
-                "系统亚克力（Win11 DWM 模糊 + 玻璃高光）"
+                L.T("Refraction (background capture + shader, Windows 10 2004+)", "自绘折射（抓取背景 + 着色器，Win10 2004+）"),
+                L.T("System acrylic (Windows 11 DWM blur + glass highlight)", "系统亚克力（Win11 DWM 模糊 + 玻璃高光）")
             }, (int)_s.Mode, i => _s.Mode = (GlassMode)i));
 
-            root.Children.Add(Combo("外观", new[] { "跟随 Flow", "浅色", "深色" },
+            root.Children.Add(Combo(L.T("Appearance", "外观"), new[] { L.T("Follow Flow", "跟随 Flow"), L.T("Light", "浅色"), L.T("Dark", "深色") },
                 (int)_s.Appearance, i => _s.Appearance = (GlassAppearance)i));
 
-            root.Children.Add(Header("形状"));
-            root.Children.Add(SliderRow("圆角", 0, 40, _s.CornerRadius, 1, v => _s.CornerRadius = v));
+            root.Children.Add(Header(L.T("Shape", "形状")));
+            root.Children.Add(SliderRow(L.T("Corner radius", "圆角"), 0, 40, _s.CornerRadius, 1, v => _s.CornerRadius = v));
 
-            root.Children.Add(Header("玻璃（仅自绘折射模式）"));
-            root.Children.Add(SliderRow("背景模糊", 0, 40, _s.BlurRadius, 1, v => _s.BlurRadius = v));
-            root.Children.Add(SliderRow("折射强度", -60, 80, _s.Refraction, 1, v => _s.Refraction = v));
-            root.Children.Add(SliderRow("折射边缘宽度", 4, 80, _s.EdgeWidth, 1, v => _s.EdgeWidth = v));
-            root.Children.Add(SliderRow("色散", 0, 1, _s.Chroma, 0.05, v => _s.Chroma = v));
-            root.Children.Add(SliderRow("着色", 0, 0.9, _s.TintAmount, 0.02, v => _s.TintAmount = v));
-            root.Children.Add(SliderRow("饱和度", 0.5, 2.0, _s.Saturation, 0.05, v => _s.Saturation = v));
+            root.Children.Add(Header(L.T("Glass (refraction mode only)", "玻璃（仅自绘折射模式）")));
+            root.Children.Add(SliderRow(L.T("Background blur", "背景模糊"), 0, 40, _s.BlurRadius, 1, v => _s.BlurRadius = v));
+            root.Children.Add(SliderRow(L.T("Refraction strength", "折射强度"), -60, 80, _s.Refraction, 1, v => _s.Refraction = v));
+            root.Children.Add(SliderRow(L.T("Refraction edge width", "折射边缘宽度"), 4, 80, _s.EdgeWidth, 1, v => _s.EdgeWidth = v));
+            root.Children.Add(SliderRow(L.T("Dispersion", "色散"), 0, 1, _s.Chroma, 0.05, v => _s.Chroma = v));
+            root.Children.Add(SliderRow(L.T("Tint", "着色"), 0, 0.9, _s.TintAmount, 0.02, v => _s.TintAmount = v));
+            root.Children.Add(SliderRow(L.T("Saturation", "饱和度"), 0.5, 2.0, _s.Saturation, 0.05, v => _s.Saturation = v));
 
-            root.Children.Add(Header("光照"));
-            root.Children.Add(SliderRow("高光强度", 0, 2, _s.Highlight, 0.05, v => _s.Highlight = v));
-            root.Children.Add(SliderRow("光源角度", 0, 360, _s.LightAngle, 5, v => _s.LightAngle = v));
+            root.Children.Add(Header(L.T("Lighting", "光照")));
+            root.Children.Add(SliderRow(L.T("Highlight strength", "高光强度"), 0, 2, _s.Highlight, 0.05, v => _s.Highlight = v));
+            root.Children.Add(SliderRow(L.T("Light angle", "光源角度"), 0, 360, _s.LightAngle, 5, v => _s.LightAngle = v));
 
-            root.Children.Add(Header("性能"));
-            root.Children.Add(SliderRow("实时刷新间隔 ms（0=关闭）", 0, 1000, _s.LiveRefreshMs, 50, v => _s.LiveRefreshMs = (int)v));
+            root.Children.Add(Header(L.T("Performance", "性能")));
+            root.Children.Add(SliderRow(L.T("Live refresh interval, ms (0 = off)", "实时刷新间隔 ms（0=关闭）"), 0, 1000, _s.LiveRefreshMs, 50, v => _s.LiveRefreshMs = (int)v));
 
             root.Children.Add(new TextBlock
             {
                 Margin = new Thickness(0, 14, 0, 0),
                 TextWrapping = TextWrapping.Wrap,
                 Opacity = 0.7,
-                Text = "说明：自绘折射模式会把 Flow 窗口设为「不被截屏/录屏捕获」，这样插件才能抓到窗口背后的画面。" +
-                       "副作用是截图和屏幕共享里看不到 Flow 窗口；介意的话请改用系统亚克力模式。"
+                Text = L.T("Note: refraction mode excludes the Flow window from screen capture so the plugin can capture what is behind it. " +
+                           "As a side effect, Flow does not appear in screenshots, recordings or screen sharing. Use system acrylic mode if that matters to you.",
+                           "说明：自绘折射模式会把 Flow 窗口设为「不被截屏/录屏捕获」，这样插件才能抓到窗口背后的画面。" +
+                           "副作用是截图和屏幕共享里看不到 Flow 窗口；介意的话请改用系统亚克力模式。")
             });
 
             Content = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };

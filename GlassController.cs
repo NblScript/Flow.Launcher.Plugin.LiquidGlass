@@ -32,7 +32,8 @@ namespace Flow.Launcher.Plugin.LiquidGlass
         private Grid _glassLayer;
         private Rectangle _glassRect;
         private LiquidGlassEffect _effect;
-        private readonly ImageBrush _backdrop = new() { Stretch = Stretch.Fill };
+        // 在 UI 线程上创建（Flow 在线程池上构造插件，WPF 对象不能跨线程使用）
+        private ImageBrush _backdrop;
 
         // 着色器不可用时的简易兜底
         private Rectangle _fallbackTint;
@@ -50,6 +51,9 @@ namespace Flow.Launcher.Plugin.LiquidGlass
 
         public bool IsAttached => _attached;
         public string LastError { get; private set; }
+
+        /// <summary>出过未预料的错误后不再自动挂接，直到用户重新开启</summary>
+        public bool HasFailed { get; private set; }
 
         public GlassController(IPublicAPI api, Func<Settings> settings)
         {
@@ -69,6 +73,7 @@ namespace Flow.Launcher.Plugin.LiquidGlass
             }
             if (_attached) Detach();
 
+            _backdrop = new ImageBrush { Stretch = Stretch.Fill };
             _window = Application.Current?.MainWindow;
             if (_window == null) { LastError = "MainWindow not ready"; return; }
 
@@ -83,7 +88,7 @@ namespace Flow.Launcher.Plugin.LiquidGlass
             _useShader = LiquidGlassEffect.TryEnsureShader(out var shaderError);
             if (!_useShader)
             {
-                LastError = "着色器不可用，已使用简化效果：" + shaderError;
+                LastError = L.T("Shader unavailable, using the simplified effect: ", "着色器不可用，已使用简化效果：") + shaderError;
                 _api.LogWarn(ClassName, LastError);
             }
             else
@@ -99,6 +104,9 @@ namespace Flow.Launcher.Plugin.LiquidGlass
             _host.Children.Add(_glassLayer);
             _host.Children.Add(_border);
             _window.Content = _host;
+            // 从这里起 Detach 可以完整还原，后面任何一步出错都能退回原样
+            _attached = true;
+            _attachedMode = s.Mode;
 
             // 玻璃层跟随 Border 的 Margin（Flow 开启阴影时会加 Margin）
             BindingOperations.SetBinding(_glassLayer, FrameworkElement.MarginProperty,
@@ -126,9 +134,6 @@ namespace Flow.Launcher.Plugin.LiquidGlass
             _window.IsVisibleChanged += OnWindowIsVisibleChanged;
             _window.DpiChanged += OnDpiChanged;
 
-            _attached = true;
-            _attachedMode = s.Mode;
-
             ApplyVisualSettings();
             if (_window.IsVisible) OnShown();
 
@@ -154,7 +159,7 @@ namespace Flow.Launcher.Plugin.LiquidGlass
             if (_attachedMode == GlassMode.Refraction) RestoreBorderBackground();
             SetExcludeFromCapture(false);
 
-            _backdrop.ImageSource = null;
+            if (_backdrop != null) _backdrop.ImageSource = null;
             _host = null;
             _glassLayer = null;
             _glassRect = null;
@@ -164,6 +169,36 @@ namespace Flow.Launcher.Plugin.LiquidGlass
             _attached = false;
 
             _api.LogInfo(ClassName, "Liquid glass detached");
+        }
+
+        /// <summary>
+        /// 遇到未预料的异常时调用：尽力恢复 Flow 原来的窗口，之后不再自动挂接。
+        /// </summary>
+        public void Fail(Exception e)
+        {
+            HasFailed = true;
+            LastError = L.T("Liquid Glass hit an error and was turned off to keep Flow stable: ",
+                            "液态玻璃出错，已自动关闭以保证 Flow 正常运行：") + e.Message;
+            try { Detach(); }
+            catch (Exception e2)
+            {
+                _api.LogException(ClassName, "Detach after failure failed", e2);
+                _attached = false;
+                StopLiveTimer();
+            }
+        }
+
+        public void ResetFailure() => HasFailed = false;
+
+        /// <summary>WPF 事件里抛出的异常会让 Flow 崩溃，所以所有回调都经过这里</summary>
+        private void Safe(Action action, string what)
+        {
+            try { action(); }
+            catch (Exception e)
+            {
+                _api.LogException(ClassName, what + " failed", e);
+                Fail(e);
+            }
         }
 
         private void RestoreBorderBackground()
@@ -289,19 +324,17 @@ namespace Flow.Launcher.Plugin.LiquidGlass
             StopLiveTimer();
         }
 
-        private void OnWindowIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
-        {
-            if ((bool)e.NewValue) OnShown(); else OnHidden();
-        }
+        private void OnWindowIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e) =>
+            Safe(() => { if ((bool)e.NewValue) OnShown(); else OnHidden(); }, "IsVisibleChanged");
 
-        private void OnBorderSizeChanged(object sender, SizeChangedEventArgs e) => UpdateMapping(recaptureIfOutside: true);
+        private void OnBorderSizeChanged(object sender, SizeChangedEventArgs e) =>
+            Safe(() => UpdateMapping(recaptureIfOutside: true), "SizeChanged");
 
-        private void OnWindowMoved(object sender, EventArgs e) => UpdateMapping(recaptureIfOutside: true);
+        private void OnWindowMoved(object sender, EventArgs e) =>
+            Safe(() => UpdateMapping(recaptureIfOutside: true), "LocationChanged");
 
-        private void OnDpiChanged(object sender, DpiChangedEventArgs e)
-        {
-            ApplyVisualSettings();
-        }
+        private void OnDpiChanged(object sender, DpiChangedEventArgs e) =>
+            Safe(ApplyVisualSettings, "DpiChanged");
 
         private bool TryGetBorderScreenRect(out RECT rect)
         {
@@ -375,13 +408,13 @@ namespace Flow.Launcher.Plugin.LiquidGlass
                     var bmp = BackdropCapture.Capture(c, blur);
                     if (bmp != null)
                     {
-                        dispatcher.InvokeAsync(() =>
+                        dispatcher.InvokeAsync(() => Safe(() =>
                         {
                             if (!_attached) return;
                             _backdrop.ImageSource = bmp;
                             _captureRect = c;
                             UpdateMapping(recaptureIfOutside: false);
-                        });
+                        }, "Apply async capture"));
                     }
                 }
                 catch (Exception e)
@@ -434,7 +467,7 @@ namespace Flow.Launcher.Plugin.LiquidGlass
             if (_liveTimer == null)
             {
                 _liveTimer = new DispatcherTimer(DispatcherPriority.Background);
-                _liveTimer.Tick += (_, _) => CaptureAsync();
+                _liveTimer.Tick += (_, _) => Safe(CaptureAsync, "Live refresh");
             }
             _liveTimer.Interval = TimeSpan.FromMilliseconds(ms);
             _liveTimer.Start();
@@ -453,7 +486,8 @@ namespace Flow.Launcher.Plugin.LiquidGlass
                 _excludedFromCapture = Native.SetWindowDisplayAffinity(hwnd, Native.WDA_EXCLUDEFROMCAPTURE);
                 if (!_excludedFromCapture)
                 {
-                    LastError = "SetWindowDisplayAffinity 失败（需要 Windows 10 2004 或更高版本），折射背景已禁用，可在设置里改用「系统亚克力」模式";
+                    LastError = L.T("SetWindowDisplayAffinity failed (needs Windows 10 2004 or later). The refraction background is disabled; you can switch to system acrylic mode in settings.",
+                                    "SetWindowDisplayAffinity 失败（需要 Windows 10 2004 或更高版本），折射背景已禁用，可在设置里改用「系统亚克力」模式");
                     _api.LogWarn(ClassName, LastError);
                 }
             }
