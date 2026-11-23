@@ -1,0 +1,36 @@
+# Keys from Flow Launcher 2.1.4 Themes/Base.xaml (identical in v2.0.0 and v2.1.0).
+# https://github.com/Flow-Launcher/Flow.Launcher/blob/v2.1.4/Flow.Launcher/Themes/Base.xaml
+BaseBulletStyle
+BaseClockBox
+BaseClockPanel
+BaseClockPanelPosition
+BaseDateBox
+BaseGlyphSelectedStyle
+BaseGlyphStyle
+BaseItemHotkeyBGSelectedStyle
+BaseItemHotkeyBGStyle
+BaseItemHotkeySelecetedStyle
+BaseItemHotkeySelectedStyle
+BaseItemHotkeyStyle
+BaseItemImageSelectedStyle
+BaseItemNumberStyle
+BaseItemSubTitleSelectedStyle
+BaseItemSubTitleStyle
+BaseItemTitleSelectedStyle
+BaseItemTitleStyle
+BaseListboxStyle
+BasePendingLineStyle
+BasePreviewBorderStyle
+BasePreviewGlyph
+BasePreviewItemSubTitleStyle
+BasePreviewItemTitleStyle
+BaseQueryBoxBgStyle
+BaseQueryBoxStyle
+BaseQuerySuggestionBoxStyle
+BaseScrollBarStyle
+BaseSearchIconPosition
+BaseSearchIconStyle
+BaseSeparatorStyle
+BaseThumbStyle
+BaseWindowBorderStyle
+BaseWindowStyle

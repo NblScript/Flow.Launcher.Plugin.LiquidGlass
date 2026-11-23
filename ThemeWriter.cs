@@ -136,16 +136,6 @@ namespace Flow.Launcher.Plugin.LiquidGlass
         </Setter>
     </Style>
     <Style x:Key=""ScrollBarStyle"" BasedOn=""{{StaticResource BaseScrollBarStyle}}"" TargetType=""{{x:Type ScrollBar}}"" />
-    <Style x:Key=""HorizontalScrollBarStyle"" BasedOn=""{{StaticResource BaseHorizontalScrollBarStyle}}"" TargetType=""{{x:Type ScrollBar}}"" />
-    <Style x:Key=""HorizontalThumbStyle"" BasedOn=""{{StaticResource BaseHorizontalThumbStyle}}"" TargetType=""{{x:Type Thumb}}"">
-        <Setter Property=""Template"">
-            <Setter.Value>
-                <ControlTemplate TargetType=""{{x:Type Thumb}}"">
-                    <Border Background=""{thumb}"" BorderBrush=""Transparent"" BorderThickness=""0"" CornerRadius=""3"" />
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
     <Style x:Key=""SearchIconStyle"" BasedOn=""{{StaticResource BaseSearchIconStyle}}"" TargetType=""{{x:Type Path}}"">
         <Setter Property=""Fill"" Value=""{sub}"" />
         <Setter Property=""Width"" Value=""24"" />
@@ -178,7 +168,14 @@ namespace Flow.Launcher.Plugin.LiquidGlass
     <CornerRadius x:Key=""ItemRadius"">12</CornerRadius>
     <Thickness x:Key=""ItemMargin"">10 0 10 0</Thickness>
     <Thickness x:Key=""ResultMargin"">0 0 0 10</Thickness>
-    <Style x:Key=""ClockPanel"" BasedOn=""{{StaticResource BaseClockPanel}}"" TargetType=""{{x:Type StackPanel}}"">
+    <!--
+        The stable Flow Launcher ClockPanel uses a vertical stack. Inheriting
+        BaseClockPanel directly switches it back to horizontal and joins the
+        clock/date text without spacing. Keep the native layout and let Flow
+        manage per-item visibility; Collapsed elements take no space.
+    -->
+    <Style x:Key=""ClockPanel"" BasedOn=""{{StaticResource ClockPanel}}"" TargetType=""{{x:Type StackPanel}}"">
+        <Setter Property=""Orientation"" Value=""Vertical"" />
         <Setter Property=""Margin"" Value=""0 0 54 0"" />
     </Style>
     <Style x:Key=""ClockBox"" BasedOn=""{{StaticResource BaseClockBox}}"" TargetType=""{{x:Type TextBlock}}"">
