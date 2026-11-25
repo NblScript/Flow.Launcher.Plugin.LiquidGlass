@@ -63,6 +63,14 @@ Labels are shown in English, or in Chinese when Flow's language is set to Chines
 
 If you manually switch to another theme in Flow settings, the plugin disables itself and will not take the theme back. Type `glass` and press Enter to turn it on again.
 
+## Flow Launcher 2.x compatibility
+
+The generated `Liquid Glass.xaml` previously referenced `BaseHorizontalScrollBarStyle` and `BaseHorizontalThumbStyle`. These horizontal scrollbar base styles are not present in Flow Launcher 2.0.0–2.1.4, so WPF could reject the entire theme with a `XamlParseException`. The generated theme now omits the unused horizontal scrollbar overrides and retains the existing vertical scrollbar styles.
+
+The generated clock/date panel previously inherited `BaseClockPanel` (a horizontal StackPanel), rather than the regular `ClockPanel` (vertical). With both options enabled, the time and date were rendered next to each other without a gap. The theme now preserves the native vertical layout, the clock/date styles, and Flow Launcher's independent visibility settings. When only one is enabled, there is no reserved space for the other.
+
+The build workflow includes a static compatibility regression check against the shared `Base.xaml` resource keys from Flow Launcher 2.0.0, 2.1.0 and 2.1.4, as well as clock/date style invariants. Runtime and visual behavior should also be smoke-tested on Windows, including clock only, date only, both, and neither.
+
 ## Known limitations
 
 - Refraction mode uses a snapshot of the background taken when the window opens. If a video is playing behind it, enable "live refresh" (costs some CPU).
