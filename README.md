@@ -65,11 +65,11 @@ If you manually switch to another theme in Flow settings, the plugin disables it
 
 ## Flow Launcher 2.x compatibility
 
-The generated `Liquid Glass.xaml` previously referenced `BaseHorizontalScrollBarStyle` and `BaseHorizontalThumbStyle`. These horizontal scrollbar base styles are not present in Flow Launcher 2.0.0–2.1.4, so WPF could reject the entire theme with a `XamlParseException`. The generated theme now omits the unused horizontal scrollbar overrides and retains the existing vertical scrollbar styles.
+The generated `Liquid Glass.xaml` previously referenced `BaseHorizontalScrollBarStyle` and `BaseHorizontalThumbStyle`. These horizontal scrollbar base styles are not present in Flow Launcher 2.0.0–2.1.4, so WPF could reject the entire theme with a `XamlParseException`. The generated theme now defines self-contained horizontal scrollbar and thumb styles with no dependency on these host keys. Stable releases can load them without using them; newer Flow builds can resolve the same theme keys for horizontal scrolling (including code previews), with the original Liquid Glass light/dark thumb colors. Existing vertical scrollbar styles are unchanged.
 
 The generated clock/date panel previously inherited `BaseClockPanel` (a horizontal StackPanel), rather than the regular `ClockPanel` (vertical). With both options enabled, the time and date were rendered next to each other without a gap. The theme now preserves the native vertical layout, the clock/date styles, and Flow Launcher's independent visibility settings. When only one is enabled, there is no reserved space for the other.
 
-The build workflow includes a static compatibility regression check against the shared `Base.xaml` resource keys from Flow Launcher 2.0.0, 2.1.0 and 2.1.4, as well as clock/date style invariants. Runtime and visual behavior should also be smoke-tested on Windows, including clock only, date only, both, and neither.
+The build workflow includes a static compatibility regression check against the shared `Base.xaml` resource keys from Flow Launcher 2.0.0, 2.1.0 and 2.1.4, as well as clock/date style invariants. A Windows WPF smoke test also loads the horizontal style definitions with and without simulated host fallback styles, checking both palettes, the track template, thumb layout and value propagation. Full host integration and visual behavior should still be smoke-tested on Windows, including clock only, date only, both, neither, and horizontal code preview scrolling.
 
 ## Known limitations
 
