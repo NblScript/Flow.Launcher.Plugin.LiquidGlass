@@ -136,6 +136,44 @@ namespace Flow.Launcher.Plugin.LiquidGlass
         </Setter>
     </Style>
     <Style x:Key=""ScrollBarStyle"" BasedOn=""{{StaticResource BaseScrollBarStyle}}"" TargetType=""{{x:Type ScrollBar}}"" />
+    <!--
+        Keep horizontal styles self-contained: stable Flow 2.x has no horizontal
+        base styles. Newer Flow builds resolve these keys from the active theme.
+        Match the native horizontal track layout without inheriting missing keys.
+    -->
+    <Style x:Key=""HorizontalThumbStyle"" TargetType=""{{x:Type Thumb}}"">
+        <Setter Property=""SnapsToDevicePixels"" Value=""True"" />
+        <Setter Property=""OverridesDefaultStyle"" Value=""True"" />
+        <Setter Property=""IsTabStop"" Value=""False"" />
+        <Setter Property=""Focusable"" Value=""False"" />
+        <Setter Property=""Template"">
+            <Setter.Value>
+                <ControlTemplate TargetType=""{{x:Type Thumb}}"">
+                    <Border Background=""{thumb}"" BorderBrush=""Transparent"" BorderThickness=""0"" CornerRadius=""3"" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key=""HorizontalScrollBarStyle"" TargetType=""{{x:Type ScrollBar}}"">
+        <Setter Property=""Stylus.IsPressAndHoldEnabled"" Value=""False"" />
+        <Setter Property=""Stylus.IsFlicksEnabled"" Value=""False"" />
+        <Setter Property=""Background"" Value=""Black"" />
+        <Setter Property=""Height"" Value=""5"" />
+        <Setter Property=""MinHeight"" Value=""5"" />
+        <Setter Property=""Template"">
+            <Setter.Value>
+                <ControlTemplate TargetType=""{{x:Type ScrollBar}}"">
+                    <DockPanel>
+                        <Track x:Name=""PART_Track"" DockPanel.Dock=""Bottom"" Orientation=""{{TemplateBinding Orientation}}"">
+                            <Track.Thumb>
+                                <Thumb Style=""{{DynamicResource HorizontalThumbStyle}}"" />
+                            </Track.Thumb>
+                        </Track>
+                    </DockPanel>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <Style x:Key=""SearchIconStyle"" BasedOn=""{{StaticResource BaseSearchIconStyle}}"" TargetType=""{{x:Type Path}}"">
         <Setter Property=""Fill"" Value=""{sub}"" />
         <Setter Property=""Width"" Value=""24"" />

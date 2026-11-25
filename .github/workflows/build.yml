@@ -25,6 +25,10 @@ jobs:
         shell: pwsh
         run: ./tests/check-theme-compatibility.ps1
 
+      - name: Check horizontal scrollbar templates on Windows WPF
+        shell: pwsh
+        run: pwsh -NoProfile -STA -File ./tests/check-horizontal-scrollbar.ps1
+
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0.x
